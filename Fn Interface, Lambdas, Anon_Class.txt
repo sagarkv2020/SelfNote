@@ -1,0 +1,145 @@
+Question -> functional interface, can it have 2 abstract methods, Lambdas vs functional Interface
+            1. Functional Interface
+                 A functional interface in Java is an interface that has exactly one abstract method.
+                 This single abstract method makes the interface eligible to be implemented by a lambda expression or method reference.
+             *** Functional interfaces can have any number of default or static methods, but only one abstract method.
+
+             2. Can a Functional Interface have 2 abstract methods?
+                 No, if an interface has more than one abstract method, it is not a functional interface.
+                 Java's @FunctionalInterface annotation enforces this rule at compile-time.
+
+            Valid Functional Interface Example:
+                    @FunctionalInterface
+                    interface MyFunctionalInterface {
+                        void doSomething();                // ✅ 1 abstract method (In interfaces, methods without a body are implicitly abstract.)
+                        default void helper() {            // ✅ OK, default methods don't count
+                            System.out.println("Helper");
+                        }
+                        static void log() {                // ✅ OK, static methods don't count
+                            System.out.println("Log");
+                        }
+                    }
+
+             In an interface:-
+                 - void m();                   → abstract method
+                 - default void m() { ... }    → default method (has a body)
+                 - static void m() { ... }     → static method (has a body)
+
+
+Whats  Lambda Expression?
+                A Lambda Expression is a short, anonymous function that you can use to implement a method defined by a functional interface
+                    — basically a way to write concise code for a single-method interface without creating a full class.
+      Why Lambdas?
+                    Before Java 8, if you wanted to pass behavior (like a block of code) to methods, you had to write:
+                     - Anonymous inner classes, which are verbose.
+                     - Named classes implementing interfaces.
+                    With lambdas, you can write the implementation inline, much shorter and clearer.
+
+                    Eg - Suppose you want to run some code in a new thread using Runnable:
+
+                 ->Before Java 8 (anonymous class):
+                         **********************************************************
+                         **********************************************************
+                         *****   Runnable r = new Runnable() {                 *****
+                         *****        @Override                                *****
+                         *****       public void run() {                       *****
+                         *****           Sys.out.("Hello from thread");        *****
+                         *****       }                                         *****
+                         *****    };                                           *****
+                         *****   new Thread(r).start();                        *****
+                         ***********************************************************
+                         **********************************************************
+
+               -> With Lambda (Java 8+):
+                        ***********************************************************************
+                        ***********************************************************************
+                        **    Runnable r = () -> System.out.println("Hello from thread");   **
+                        **    new Thread(r).start();                                        **
+                        ***********************************************************************
+                        **********************************************************************
+
+                        Key points:
+                            - Lambdas can only be used where a functional interface is expected.
+                            - They do not have a name (anonymous).
+                            - Can capture variables from the enclosing scope (effectively final).
+                            - Make code much more readable and concise.
+
+
+========================================================================================================================================================
+========================================================================================================================================================
+========================================================================================================================================================
+========================================================================================================================================================
+what was i blabbering about consumer and predicate when explaining Lambdas
+========================================================================================================================================================
+
+
+Haha, no worries — you were actually on the right track!
+When you mentioned Consumer and Predicate while talking about lambdas,
+     you were referring to built-in functional interfaces in Java’s java.util.function package that are commonly used with lambdas.
+Here’s a clear breakdown to help you explain them confidently:
+
+✅ What you were trying to say:
+"Lambda expressions in Java are used to implement functional interfaces, like Consumer, Predicate, and Function — these are interfaces with a single abstract method, and lambdas provide a clean, inline way to implement them."
+
+🔹 Consumer<T>
+  - Represents an operation that takes one input and returns nothing.
+  - Common use: performing an action (like printing, logging, saving).
+  - Method: void accept(T t)
+
+Example with lambda:
+Consumer<String> printer = s -> System.out.println("Hello " + s);
+printer.accept("Java");  // prints "Hello Java"
+
+
+🔹 Predicate<T>
+  - Represents a function that takes one input and returns a boolean.
+  - Used for filtering or conditions.
+  - Method: boolean test(T t)
+
+Predicate<Integer> isEven = n -> n % 2 == 0;
+System.out.println(isEven.test(4)); // true
+
+========================================================================================================================================================
+a normal java8 stream filter expression> is that consumer-predictae model? Can you explain  ??
+========================================================================================================================================================
+Awesome question — and yes, you're right to link Java 8's stream().filter(...) to the Predicate concept.
+
+Let me explain this clearly:
+
+🔹 stream().filter(...) — What is it?
+When you use .filter(...) on a Java Stream, you're telling it:
+   -> “Keep only the elements that satisfy a certain condition.”
+This condition is provided as a lambda, and that lambda must match the Predicate<T> functional interface.
+
+✅ Yes — it’s a Predicate model, not a Consumer.
+
+        List<String> names = List.of("John", "Alice", "Bob");
+        List<String> filtered = names.stream()
+            .filter(name -> name.startsWith("A"))  // <- this is a Predicate<String>
+            .collect(Collectors.toList());
+
+    🔍 What is Predicate?
+            @FunctionalInterface
+            public interface Predicate<T> {
+                boolean test(T t);
+            }
+
+            So in the above .filter(name -> name.startsWith("A")), the lambda name -> name.startsWith("A") implements:
+             -> boolean test(String name)
+
+
+🛑   Consumer
+Consumer<T> has the method ********void accept(T t)*********** — it’s used for actions (like printing or saving), not for filtering.
+
+For example, this would be a Consumer:
+    -> names.forEach(name -> System.out.println(name));  // Consumer<String>
+
+Here, the lambda name -> System.out.println(name) matches Consumer<String>.
+
+
+
+
+
+
+
+

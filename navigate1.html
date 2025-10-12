@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gallery Viewer</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+        
+        body {
+            display: flex;
+            min-height: 100vh;
+            background-color: #f5f5f5;
+        }
+        
+        .sidebar {
+            width: 250px;
+            background-color: #333;
+            color: white;
+            padding: 20px;
+            height: 100vh;
+            position: fixed;
+            overflow-y: auto;
+        }
+        
+        .sidebar h2 {
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #555;
+        }
+        
+        .gallery-list {
+            list-style: none;
+        }
+        
+        .gallery-item {
+            margin-bottom: 10px;
+        }
+        
+        .gallery-btn {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+            text-align: left;
+            margin-bottom: 5px;
+        }
+        
+        .gallery-btn:hover {
+            background-color: #45a049;
+        }
+        
+        .subgallery-btn {
+            width: 90%;
+            padding: 8px;
+            background-color: #555;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+            text-align: left;
+            margin-left: 10%;
+            margin-bottom: 3px;
+            display: none; /* Hidden by default */
+        }
+        
+        .subgallery-btn:hover {
+            background-color: #666;
+        }
+        
+        .main-content {
+            margin-left: 250px;
+            flex: 1;
+            padding: 20px;
+        }
+        
+        .gallery-title {
+            text-align: center;
+            margin: 20px 0;
+            color: #333;
+        }
+        
+        .breadcrumb {
+            margin-bottom: 20px;
+            font-size: 16px;
+            color: #666;
+        }
+        
+        .breadcrumb a {
+            color: #4CAF50;
+            text-decoration: none;
+        }
+        
+        .breadcrumb a:hover {
+            text-decoration: underline;
+        }
+        
+        .thumbnail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .thumbnail {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .thumbnail:hover {
+            transform: scale(1.03);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .fullscreen-view {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .fullscreen-image {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        
+        .nav-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: rgba(255, 255, 255, 0.3);
+            color: white;
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            font-size: 24px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            z-index: 1001;
+        }
+        
+        .nav-btn:hover {
+            background-color: rgba(255, 255, 255, 0.5);
+        }
+        
+        .prev-btn {
+            left: 120px;
+			bottom: 20px;
+			transform: translateX(-50%);
+            top: auto;
+        }
+        
+        .next-btn {
+			right: 120px;
+			bottom: 20px;
+            transform: translateX(-50%);
+            top: auto;
+        }
+        
+        .random-btn {
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            top: auto;
+        }
+        
+        .close-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: rgba(255, 255, 255, 0.3);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 20px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            z-index: 1001;
+        }
+        
+        .close-btn:hover {
+            background-color: rgba(255, 255, 255, 0.5);
+        }
+        
+        .home-message {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 80vh;
+            color: #666;
+            font-size: 24px;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h2>Galleries</h2>
+        <ul class="gallery-list" id="galleryMenu">
+            <!-- Gallery buttons will be added here by JavaScript -->
+        </ul>
+    </div>
+    
+    <div class="main-content" id="mainContent">
+        <div class="home-message" id="homeMessage">
+            Select a gallery from the left menu to view images
+        </div>
+        
+        <div class="breadcrumb" id="breadcrumb">
+            <!-- Breadcrumb navigation will be added here -->
+        </div>
+        
+        <h2 class="gallery-title" id="galleryTitle"></h2>
+        <div class="thumbnail-grid" id="thumbnailGrid">
+            <!-- Thumbnails will be added here by JavaScript -->
+        </div>
+    </div>
+    
+    <div class="fullscreen-view" id="fullscreenView">
+        <button class="close-btn" id="closeBtn">×</button>
+        <img class="fullscreen-image" id="fullscreenImage" src="" alt="Fullscreen Image">
+        <button class="nav-btn prev-btn" id="prevBtn">‹</button>
+        <button class="nav-btn next-btn" id="nextBtn">›</button>
+        <button class="nav-btn random-btn" id="randomBtn">↻</button>
+    </div>
+    
+    <script>
+        // Sample nested gallery data - replace with your actual gallery data
+        const galleries = {
+            "Nature": {
+                "Forests": [
+                    'https://images.unsplash.com/photo-1562569633-622303bafef5?q=80&w=1982&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1547407139-3c921a66005c?q=80&w=2574&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1541701494587-cb58502866ab?q=80&w=2670&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				 
+				'https://images.unsplash.com/photo-1542664408056-8ec64f24de47?q=80&w=2574&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1541753236788-b0ac1fc5009d?q=80&w=2612&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+                ],
+                "Mountains": [
+                  
+				'https://images.unsplash.com/photo-1542856809-e1230214be24?q=80&w=2576&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1542890886-40c9094e352a?q=80&w=2574&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1542676032-6e468ada2953?q=80&w=2664&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1542708993627-b6e5bbae43c4?q=80&w=2644&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1542664408056-8ec64f24de47?q=80&w=2574&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1541753236788-b0ac1fc5009d?q=80&w=2612&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+                ],
+                "Water": [
+                    'https://images.unsplash.com/photo-1562569633-622303bafef5?q=80&w=1982&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1547407139-3c921a66005c?q=80&w=2574&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1541701494587-cb58502866ab?q=80&w=2670&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1529391387768-ab39476d6a52?q=80&w=2242&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1542856809-e1230214be24?q=80&w=2576&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+			 
+				'https://images.unsplash.com/photo-1542664408056-8ec64f24de47?q=80&w=2574&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1541753236788-b0ac1fc5009d?q=80&w=2612&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+                ]
+            },
+            "Animals": {
+                "Wild Animals": [
+                   'https://images.unsplash.com/photo-1562569633-622303bafef5?q=80&w=1982&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1547407139-3c921a66005c?q=80&w=2574&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1541701494587-cb58502866ab?q=80&w=2670&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1529391387768-ab39476d6a52?q=80&w=2242&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1542856809-e1230214be24?q=80&w=2576&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1542890886-40c9094e352a?q=80&w=2574&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1542676032-6e468ada2953?q=80&w=2664&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1542708993627-b6e5bbae43c4?q=80&w=2644&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1542664408056-8ec64f24de47?q=80&w=2574&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+		 
+                ],
+                "Birds": [
+               
+				'https://images.unsplash.com/photo-1542890886-40c9094e352a?q=80&w=2574&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1542676032-6e468ada2953?q=80&w=2664&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1542708993627-b6e5bbae43c4?q=80&w=2644&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1542664408056-8ec64f24de47?q=80&w=2574&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1541753236788-b0ac1fc5009d?q=80&w=2612&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1542640244-7e672d6cef4e?q=80&w=2670&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1542641734-3b824eaabad0?q=80&w=2670&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1542332213-9b5a5a3fad35?q=80&w=2670&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1562569633-622303bafef5?q=80&w=1982&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1547407139-3c921a66005c?q=80&w=2574&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1541701494587-cb58502866ab?q=80&w=2670&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1529391387768-ab39476d6a52?q=80&w=2242&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1542856809-e1230214be24?q=80&w=2576&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1542890886-40c9094e352a?q=80&w=2574&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1542676032-6e468ada2953?q=80&w=2664&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1542708993627-b6e5bbae43c4?q=80&w=2644&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1542664408056-8ec64f24de47?q=80&w=2574&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1541753236788-b0ac1fc5009d?q=80&w=2612&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+                ],
+                "Domestic": [
+                    'https://images.unsplash.com/photo-1562569633-622303bafef5?q=80&w=1982&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1547407139-3c921a66005c?q=80&w=2574&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1541701494587-cb58502866ab?q=80&w=2670&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1529391387768-ab39476d6a52?q=80&w=2242&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				 
+                ]
+            },
+            "Cities": {
+                "Europe": [
+                    'https://images.unsplash.com/photo-1562569633-622303bafef5?q=80&w=1982&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1547407139-3c921a66005c?q=80&w=2574&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1541701494587-cb58502866ab?q=80&w=2670&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1529391387768-ab39476d6a52?q=80&w=2242&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1542856809-e1230214be24?q=80&w=2576&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1542890886-40c9094e352a?q=80&w=2574&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1542676032-6e468ada2953?q=80&w=2664&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1542708993627-b6e5bbae43c4?q=80&w=2644&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1542664408056-8ec64f24de47?q=80&w=2574&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1541753236788-b0ac1fc5009d?q=80&w=2612&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1542640244-7e672d6cef4e?q=80&w=2670&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				 
+                ],
+                "Asia": [
+                    'https://images.unsplash.com/photo-1562569633-622303bafef5?q=80&w=1982&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1547407139-3c921a66005c?q=80&w=2574&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1541701494587-cb58502866ab?q=80&w=2670&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1529391387768-ab39476d6a52?q=80&w=2242&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+		 
+				'https://images.unsplash.com/photo-1542664408056-8ec64f24de47?q=80&w=2574&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1541753236788-b0ac1fc5009d?q=80&w=2612&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+                ],
+                "America": [
+                'https://images.unsplash.com/photo-1542641734-3b824eaabad0?q=80&w=2670&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1542332213-9b5a5a3fad35?q=80&w=2670&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1562569633-622303bafef5?q=80&w=1982&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1547407139-3c921a66005c?q=80&w=2574&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1541701494587-cb58502866ab?q=80&w=2670&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1529391387768-ab39476d6a52?q=80&w=2242&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1542856809-e1230214be24?q=80&w=2576&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1542890886-40c9094e352a?q=80&w=2574&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1542676032-6e468ada2953?q=80&w=2664&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1542708993627-b6e5bbae43c4?q=80&w=2644&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1542664408056-8ec64f24de47?q=80&w=2574&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+				'https://images.unsplash.com/photo-1541753236788-b0ac1fc5009d?q=80&w=2612&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+                ]
+            }
+        };
+
+        // DOM elements
+        const galleryMenu = document.getElementById('galleryMenu');
+        const mainContent = document.getElementById('mainContent');
+        const homeMessage = document.getElementById('homeMessage');
+        const breadcrumb = document.getElementById('breadcrumb');
+        const galleryTitle = document.getElementById('galleryTitle');
+        const thumbnailGrid = document.getElementById('thumbnailGrid');
+        const fullscreenView = document.getElementById('fullscreenView');
+        const fullscreenImage = document.getElementById('fullscreenImage');
+        const closeBtn = document.getElementById('closeBtn');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const randomBtn = document.getElementById('randomBtn');
+        
+        // Current state
+        let currentParentGallery = null;
+        let currentSubGallery = null;
+        let currentImageIndex = 0;
+        let navigationStack = [];
+        
+        // Initialize the app
+        function init() {
+            // Create parent gallery menu buttons
+            for (const parentGalleryName in galleries) {
+                const li = document.createElement('li');
+                li.className = 'gallery-item';
+                
+                const button = document.createElement('button');
+                button.className = 'gallery-btn';
+                button.textContent = parentGalleryName;
+                button.dataset.gallery = parentGalleryName;
+                
+                button.addEventListener('click', function() {
+                    toggleSubGalleries(this.dataset.gallery);
+                });
+                
+                li.appendChild(button);
+                galleryMenu.appendChild(li);
+                
+                // Create sub-gallery buttons (hidden by default)
+                for (const subGalleryName in galleries[parentGalleryName]) {
+                    const subButton = document.createElement('button');
+                    subButton.className = 'subgallery-btn';
+                    subButton.textContent = subGalleryName;
+                    subButton.dataset.parent = parentGalleryName;
+                    subButton.dataset.subgallery = subGalleryName;
+                    
+                    subButton.addEventListener('click', function() {
+                        openSubGallery(this.dataset.parent, this.dataset.subgallery);
+                    });
+                    
+                    li.appendChild(subButton);
+                }
+            }
+            
+            // Add event listeners
+            closeBtn.addEventListener('click', closeFullscreen);
+            prevBtn.addEventListener('click', showPreviousImage);
+            nextBtn.addEventListener('click', showNextImage);
+            randomBtn.addEventListener('click', showRandomImage);
+            
+            // Close fullscreen when clicking outside the image
+            fullscreenView.addEventListener('click', (e) => {
+                if (e.target === fullscreenView) {
+                    closeFullscreen();
+                }
+            });
+            
+            // Initially hide elements
+            breadcrumb.style.display = 'none';
+            galleryTitle.style.display = 'none';
+            thumbnailGrid.style.display = 'none';
+        }
+        
+        // Toggle sub-galleries visibility
+        function toggleSubGalleries(parentGalleryName) {
+            const buttons = document.querySelectorAll(`.subgallery-btn[data-parent="${parentGalleryName}"]`);
+            
+            // First hide all sub-galleries
+            document.querySelectorAll('.subgallery-btn').forEach(btn => {
+                btn.style.display = 'none';
+            });
+            
+            // Then show the clicked parent's sub-galleries
+            buttons.forEach(button => {
+                button.style.display = 'block';
+            });
+        }
+        
+        // Open a sub-gallery
+        function openSubGallery(parentGalleryName, subGalleryName) {
+            currentParentGallery = parentGalleryName;
+            currentSubGallery = subGalleryName;
+            
+            // Update navigation stack
+            navigationStack = [
+                { type: 'parent', name: parentGalleryName },
+                { type: 'sub', name: subGalleryName }
+            ];
+            
+            updateBreadcrumb();
+            galleryTitle.textContent = `${parentGalleryName} > ${subGalleryName}`;
+            
+            // Hide home message and show gallery content
+            homeMessage.style.display = 'none';
+            breadcrumb.style.display = 'block';
+            galleryTitle.style.display = 'block';
+            thumbnailGrid.style.display = 'grid';
+            
+            // Clear previous thumbnails
+            thumbnailGrid.innerHTML = '';
+            
+            // Add new thumbnails
+            galleries[parentGalleryName][subGalleryName].forEach((imageUrl, index) => {
+                const img = document.createElement('img');
+                img.className = 'thumbnail';
+                img.src = imageUrl;
+                img.alt = `Thumbnail ${index + 1}`;
+                img.addEventListener('click', () => openFullscreen(index));
+                thumbnailGrid.appendChild(img);
+            });
+        }
+        
+        // Update breadcrumb navigation
+        function updateBreadcrumb() {
+            breadcrumb.innerHTML = '';
+            
+            if (navigationStack.length === 0) return;
+            
+            const breadcrumbContainer = document.createElement('div');
+            
+            // Add home link
+            const homeLink = document.createElement('a');
+            homeLink.href = '#';
+            homeLink.textContent = 'Home';
+            homeLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                resetToHome();
+            });
+            breadcrumbContainer.appendChild(homeLink);
+            
+            // Add other navigation items
+            navigationStack.forEach((item, index) => {
+                const separator = document.createElement('span');
+                separator.textContent = ' > ';
+                breadcrumbContainer.appendChild(separator);
+                
+                const link = document.createElement('a');
+                link.href = '#';
+                link.textContent = item.name;
+                
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (item.type === 'parent') {
+                        // Just show the parent gallery with sub-galleries
+                        resetToHome();
+                        toggleSubGalleries(item.name);
+                    } else if (item.type === 'sub') {
+                        // Open the sub-gallery
+                        const parent = navigationStack[index-1].name;
+                        openSubGallery(parent, item.name);
+                    }
+                });
+                
+                breadcrumbContainer.appendChild(link);
+            });
+            
+            breadcrumb.appendChild(breadcrumbContainer);
+        }
+        
+        // Reset to home view
+        function resetToHome() {
+            homeMessage.style.display = 'flex';
+            breadcrumb.style.display = 'none';
+            galleryTitle.style.display = 'none';
+            thumbnailGrid.style.display = 'none';
+            thumbnailGrid.innerHTML = '';
+            currentParentGallery = null;
+            currentSubGallery = null;
+            navigationStack = [];
+            
+            // Hide all sub-galleries
+            document.querySelectorAll('.subgallery-btn').forEach(btn => {
+                btn.style.display = 'none';
+            });
+        }
+        
+        // Open image in fullscreen
+        function openFullscreen(index) {
+            currentImageIndex = index;
+            fullscreenImage.src = galleries[currentParentGallery][currentSubGallery][currentImageIndex];
+            fullscreenView.style.display = 'flex';
+            document.body.style.overflow = 'hidden'; // Prevent scrolling
+        }
+        
+        // Close fullscreen view
+        function closeFullscreen() {
+            fullscreenView.style.display = 'none';
+            document.body.style.overflow = 'auto'; // Re-enable scrolling
+        }
+        
+        // Show previous image
+        function showPreviousImage() {
+            const images = galleries[currentParentGallery][currentSubGallery];
+            currentImageIndex = (currentImageIndex - 1 + images.length) % images.length;
+            fullscreenImage.src = images[currentImageIndex];
+        }
+        
+        // Show next image
+        function showNextImage() {
+            const images = galleries[currentParentGallery][currentSubGallery];
+            currentImageIndex = (currentImageIndex + 1) % images.length;
+            fullscreenImage.src = images[currentImageIndex];
+        }
+        
+        // Show random image
+        function showRandomImage() {
+            const images = galleries[currentParentGallery][currentSubGallery];
+            const newIndex = Math.floor(Math.random() * images.length);
+            if (newIndex !== currentImageIndex || images.length === 1) {
+                currentImageIndex = newIndex;
+                fullscreenImage.src = images[currentImageIndex];
+            } else {
+                showRandomImage(); // Try again if we got the same index
+            }
+        }
+        
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (fullscreenView.style.display === 'flex') {
+                if (e.key === 'Escape') {
+                    closeFullscreen();
+                } else if (e.key === 'ArrowLeft') {
+                    showPreviousImage();
+                } else if (e.key === 'ArrowRight') {
+                    showNextImage();
+                } else if (e.key === 'r' || e.key === 'R') {
+                    showRandomImage();
+                }
+            }
+        });
+        
+        // Initialize the app when the DOM is loaded
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
